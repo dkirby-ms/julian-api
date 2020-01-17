@@ -1,0 +1,17 @@
+apiVersion : apps/v1beta1
+kind: Deployment
+metadata:
+  name: webapi 
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: webapi
+        aadpodidbinding: aadidlabel
+    spec:
+      containers:
+        - name: webapi 
+          image: juliancr.azurecr.io/webapi
+          ports:
+          - containerPort: 80
