@@ -11,23 +11,41 @@ const keyvaultClient = new SecretClient(url, azPodIdentity);
 exports.keyvaultClient = keyvaultClient;
 
 // b2cConfig.js 
+var b2coptions;
 var b2cDomainHost = "dakirb2c.b2clogin.com";
 var tenantIdGuid = "8736fc97-f3e8-4cb7-a4ac-2a604cbd7c34";
 var policyName = "B2C_1_signupsignin";
-var b2coptions = {
-    identityMetadata: "https://" + b2cDomainHost + "/" + tenantIdGuid + "/" + policyName + "/v2.0/.well-known/openid-configuration/",
-    clientID: async function() {
-        let appId = await config.keyvaultClient.getSecret('b2c-clientappid');
-        return appId.value;
-    },
-    policyName: policyName,
-    isB2C: true,
-    validateIssuer: false,
-    loggingLevel: 'info',
-    loggingNoPII: false,
-    passReqToCallback: false
-};
-exports.b2coptions = b2coptions;
+
+function b2coptions() {
+    return new Promise(function (resolve, reject) {
+        var appid;
+        keyvaultClient.getSecret('b2c-clientappid').then(function (secret) {
+            appid = secret.value;
+            var options = {
+                identityMetadata: "https://" + b2cDomainHost + "/" + tenantIdGuid + "/" + policyName + "/v2.0/.well-known/openid-configuration/",
+                clientID: appid,
+                policyName: policyName,
+                isB2C: true,
+                validateIssuer: false,
+                loggingLevel: 'info',
+                loggingNoPII: false,
+                passReqToCallback: false
+            };
+            resolve(options);
+        }).catch(function (err) {
+            return reject(err);
+        });
+    });
+}
+
+let opts = null;
+function getb2coptions() {
+    if (!opts) {
+        opts = b2coptions();
+    }
+    return opts;
+}
+exports.getb2coptions = getb2coptions;
 
 // // db.js
 // const mongoose = require('mongoose');
